@@ -42,7 +42,7 @@ def sync_data():
     except Exception as e:
         return jsonify({'error':str(e)}), 500
 
-@app.route('/sync', ['GET'])
+@app.route('/sync', methods = ['GET'])
 def get_data():
     try:
         conn = get_db_connection()

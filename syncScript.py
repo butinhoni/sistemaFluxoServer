@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import psycopg2
 import segredos
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
@@ -40,6 +41,24 @@ def sync_data():
         return jsonify({'message': 'Dados Sincronizados com sucesso'}), 200
     except Exception as e:
         return jsonify({'error':str(e)}), 500
+
+@app.route('/sync', ['GET'])
+def get_data():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute('SELECT * FROM public.users')
+        result = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(result), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

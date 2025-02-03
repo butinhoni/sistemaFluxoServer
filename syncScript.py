@@ -33,7 +33,7 @@ def sync_data():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE
                 SET date = EXCLUDED.date, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude, tipo = EXCLUDED.tipo, contrato = EXCLUDED.contrato, responsavel = EXCLUDED.responsavel, problema = EXCLUDED.problema, fotos = EXCLUDED.fotos
-                ''', (item['id'], item['data'], item['latitude'], item['longitude'], item['tipo'], item['contrato'], item['resposavel'], item['problema'], item['fotos'])
+                ''', (item['id'], item['data'], item['latitude'], item['longitude'], item['tipo'], item['contrato'], item['responsavel'], item['problema'], item['fotos'])
             )
         conn.commit()
         cursor.close()

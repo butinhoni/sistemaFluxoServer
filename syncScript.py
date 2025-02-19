@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import psycopg2
 import segredos
 from psycopg2.extras import RealDictCursor
+from psycopg2 import sql
 
 app = Flask(__name__)
 
@@ -17,47 +18,33 @@ def get_db_connection():
 
 @app.route('/sync', methods=['POST'])
 
-def sync_data():
+def authenticate():
     data = request.json
+    user = data.get('user')
+    passwd = data.get('passwd')
 
-    if not data:
-        return jsonify({'error': 'sem dados recebidos'}), 400
+
+    if not user or not passwd:
+        return jsonify({'error': 'Por Favor, insira usuario e senha'}), 400
     
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        for item in data:
-            cursor.execute(
-                '''
-                INSERT INTO public.levantamentos (date, latitude, longitude, tipo, contrato, responsavel, problema, fotos)
-                VALUES ( %s, %s, %s, %s, %s, %s, %s, %s)
-                ''', ( item['data'], item['latitude'], item['longitude'], item['tipo'], item['contrato'], item['responsavel'], item['ocorrencia'], item['fotos'])
-            )
-        conn.commit()
-        cursor.close()
-        conn.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        return jsonify({'message': 'Dados Sincronizados com sucesso'}), 200
-    except Exception as e:
-        return jsonify({'error':str(e)}), 500
-
-@app.route('/sync', methods = ['GET'])
-def get_data():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        cursor.execute('SELECT * FROM public.users')
-        result = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        return jsonify(result), 200
+    query = sql.SQL("SELECT EXISTS(SELECT 1 FROM usuarios WHERE username = {} AND password = {})").format(
+    sql.Literal(user),
+    sql.Literal(passwd)
+)
     
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    cur.execute(query)
+    result = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return jsonify({'authorized': result})
+
+
 
 
 if __name__ == 'main':

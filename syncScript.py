@@ -16,7 +16,7 @@ def get_db_connection():
     )
     return conn
 
-@app.route('/sync', methods=['POST'])
+@app.route('/auth', methods=['POST'])
 
 def authenticate():
     data = request.json

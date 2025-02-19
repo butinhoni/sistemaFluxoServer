@@ -42,7 +42,11 @@ def authenticate():
     cur.close()
     conn.close()
 
-    return jsonify({'authorized': result})
+
+    if result:
+        return jsonify({'authorized': result}), 200
+    else:
+        return jsonify({'error': 'unauthorized'}), 400
 
 
 

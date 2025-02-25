@@ -11,6 +11,8 @@ from psycopg2 import sql
 from dotenv import load_dotenv
 import os
 
+#merged
+
 load_dotenv('.env')
 
 app = Flask(__name__)

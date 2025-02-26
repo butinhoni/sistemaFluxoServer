@@ -126,7 +126,7 @@ def get_contr():
         conn = get_db_connection()
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute('SELECT * FROM public.contratos')
+        cur.execute('SELECT ic, fantasia, rodovia FROM public.contratos WHERE ativo = true')
 
         result = cur.fetchall()
 

@@ -29,10 +29,10 @@ jwt = JWTManager(app)
 def get_db_connection():
     conn = psycopg2.connect(
         database = segredos.database,
-        user = segredos.user,
         password = segredos.passwd,
         host = segredos.host,
-        port = segredos.port
+        port = segredos.port,
+        user = segredos.user
     )
     return conn
 
@@ -102,13 +102,31 @@ def refresh_login():
     set_access_cookies(response, new_access_token)
     return response
 
-@app.route('/get_med_ind', methods = ['GET'])
+@app.route('/get_med_ind-hashrandom1234', methods = ['GET'])
 def get_med_ind():
     try:
         conn = get_db_connection()
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute('SELECT * FROM public.contr_indicadores')
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error':str(e)}), 500
+
+
+@app.route('/get_contr-hashrandom1234', methods = ['GET'])
+def get_contr():
+    try:
+        conn = get_db_connection()
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute('SELECT * FROM public.contratos')
 
         result = cur.fetchall()
 

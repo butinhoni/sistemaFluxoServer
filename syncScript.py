@@ -138,5 +138,25 @@ def get_contr():
         return jsonify({'error':str(e)}), 500
 
 
+
+@app.route('/get_people-hashrandom1234', methods = ['GET'])
+def get_people():
+    try:
+        conn = get_db_connection()
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute('SELECT id, nome, cargo FROM public.usuarios')
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error':str(e)}), 500
+
+
+
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

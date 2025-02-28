@@ -156,7 +156,55 @@ def get_people():
     except Exception as e:
         return jsonify({'error':str(e)}), 500
 
+@app.route('/post_ensaiotsd-hashrandom1234', methods = ['POST'])
+def post_ensaiotsd():
 
+    data = request.json
+
+    if not data:
+        return jsonify({'error': 'sem dados recebidos'}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        for item in data:
+            if 'Brita' in item['etapa']:
+                item['material'] = 'BRITA'
+            elif 'Imprima' in item['etapa']:
+                item['material'] = 'EAI'
+            cur.execute(
+                '''
+                INSERT INTO public.ensaiostsd (
+                contrato, 
+                data, 
+                longitude, 
+                latitude, 
+                estaca_inicial, 
+                estaca_final, 
+                etapa, 
+                material, 
+                largura, 
+                posicao, 
+                largura_bandeja, 
+                comprimento_bandeja, 
+                peso_inicial, 
+                peso_final, 
+                taxa)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                SET contrato = EXCLUDED.contrato, data = EXCLUDED.data, longitude = EXCLUDED.longitude, latitude = EXCLUDED.latitude, estaca_inicial = EXCLUDED.estaca_inicial,
+                estaca_final = EXCLUDED.estaca_final, etapa = EXCLUDED.etapa, material = EXCLUDED.material, largura = EXCLUDED.largura, posicao = EXCLUDED.posicao, largura_bandeja = EXCLUDED.largura_bandeja
+                comprimento_bandeja = EXCLUDED.comprimento_bandeja, peso_inicial = EXCLUDED.peso_inicial, peso_final = EXCLUDED.peso_final, taxa = EXCLUDED.taxa
+                ''', (item['contrato'], item['data'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
+                item['largura_bandeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

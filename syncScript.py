@@ -169,6 +169,7 @@ def post_ensaiotsd():
         cur = conn.cursor()
 
         for item in data:
+            print (item)
             if 'Brita' in item['etapa']:
                 item['material'] = 'BRITA'
             elif 'Imprima' in item['etapa']:
@@ -192,8 +193,8 @@ def post_ensaiotsd():
                 peso_final, 
                 taxa)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ''', (item['contrato'], item['data'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
-                item['largura_bandeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
+                ''', (item['contrato'], item['data_ensaio'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
+                item['largura_badeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
             )
         conn.commit()
         cur.close()
@@ -201,6 +202,7 @@ def post_ensaiotsd():
 
         return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
     except Exception as e:
+        print (str(e))
         return jsonify({'error': str(e)}), 500
 
 if __name__ == 'main':

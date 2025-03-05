@@ -195,7 +195,7 @@ def post_ensaiotsd():
                 peso_inicial, 
                 peso_final, 
                 taxa)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (item['contrato'], item['data_ensaio'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
                 item['largura_badeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
             )

@@ -197,7 +197,7 @@ def post_ensaiotsd():
                 taxa)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (item['contrato'], item['data_ensaio'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
-                item['largura_badeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
+                item['largura_badeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_final'], item['taxa'])
             )
         conn.commit()
         cur.close()

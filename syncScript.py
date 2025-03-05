@@ -177,7 +177,7 @@ def post_ensaiotsd():
                 '''
                 INSERT INTO public.ensaiostsd (
                 contrato, 
-                data, 
+                "data", 
                 longitude, 
                 latitude, 
                 estaca_inicial, 
@@ -192,9 +192,6 @@ def post_ensaiotsd():
                 peso_final, 
                 taxa)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                SET contrato = EXCLUDED.contrato, data = EXCLUDED.data, longitude = EXCLUDED.longitude, latitude = EXCLUDED.latitude, estaca_inicial = EXCLUDED.estaca_inicial,
-                estaca_final = EXCLUDED.estaca_final, etapa = EXCLUDED.etapa, material = EXCLUDED.material, largura = EXCLUDED.largura, posicao = EXCLUDED.posicao, largura_bandeja = EXCLUDED.largura_bandeja
-                comprimento_bandeja = EXCLUDED.comprimento_bandeja, peso_inicial = EXCLUDED.peso_inicial, peso_final = EXCLUDED.peso_final, taxa = EXCLUDED.taxa
                 ''', (item['contrato'], item['data'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
                 item['largura_bandeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_inicial'], item['peso_final'], item['taxa'])
             )

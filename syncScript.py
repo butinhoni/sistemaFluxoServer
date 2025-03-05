@@ -10,6 +10,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2 import sql
 from dotenv import load_dotenv
 import os
+import pandas as pd
 
 #merged
 
@@ -169,6 +170,7 @@ def post_ensaiotsd():
         cur = conn.cursor()
 
         for item in data:
+            item['data_ensaio'] = pd.to_datetime(item['data_ensaio'], dayfirst=True)
             print (item)
             if 'Brita' in item['etapa']:
                 item['material'] = 'BRITA'

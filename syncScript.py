@@ -171,6 +171,7 @@ def post_ensaiotsd():
 
         for item in data:
             item['data_ensaio'] = pd.to_datetime(item['data_ensaio'], dayfirst=True)
+            item['data_ensaio'] = item['data_ensaio'].strftime('yyyy-mm-dd')
             print (item)
             if 'Brita' in item['etapa']:
                 item['material'] = 'BRITA'

@@ -44,7 +44,7 @@ def authenticate(user, passwd):
     conn = get_db_connection()
     cur = conn.cursor()
 
-    query = sql.SQL("SELECT EXISTS(SELECT 1 FROM public.usuarios WHERE nome = {} AND passwd = {})").format(
+    query = sql.SQL('SELECT EXISTS(SELECT 1 FROM public.usuarios WHERE "user" = {} AND senha = {})').format(
     sql.Literal(user),
     sql.Literal(passwd)
 )
@@ -146,7 +146,7 @@ def get_people():
         conn = get_db_connection()
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute('SELECT id, nome, cargo FROM public.usuarios')
+        cur.execute('SELECT id, nome, cargo, primeiro_nome, "user" FROM public.usuarios')
 
         result = cur.fetchall()
 
@@ -172,7 +172,6 @@ def post_ensaiotsd():
         for item in data:
             item['data_ensaio'] = pd.to_datetime(item['data_ensaio'], dayfirst=True)
             item['data_ensaio'] = item['data_ensaio'].strftime('%Y-%m-%d')
-            print (item)
             if 'Brita' in item['etapa']:
                 item['material'] = 'BRITA'
             elif 'Imprima' in item['etapa']:
@@ -207,6 +206,127 @@ def post_ensaiotsd():
     except Exception as e:
         print (str(e))
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/post_ocorrencia-hashrandom1234', methods = ['POST'])
+def post_ocorrencia():
+
+    data = request.json
+
+    if not data:
+        return jsonify({'error': 'sem dados recebidos'}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        for item in data:
+            cur.execute(
+                '''
+                INSERT INTO public.levantamentos (
+                latitude,
+                longitude,
+                tipo,
+                contrato,
+                responsavel,
+                problema,
+                fotos,
+                date
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (item['latitude'], item['longitude'], item['tipo'], item['contrato'], item['responsavel'], item['ocorrencia'], item['fotos'], item['data'])
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
+    except Exception as e:
+        print (str(e))
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/post_pictures-hashrandom1234', methods = ['POST'])
+def post_pictures():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'error':'Nome de arquivo vazio'}), 400
+    
+    if file and file.filename.endswith('.jpg'):
+        image_folder = '/home/guilherme/sistemas/checklist_engevvia/images_ocorrencias'
+        filepath = os.path.join(image_folder, file.filename)
+        file.save(filepath)
+        return jsonify({'message': 'Arquivo Salvo com sucesso', 'filepath': filepath}), 200
+    else:
+        return jsonify({'error':'Formato de arquivo invalido'})
+
+@app.route('/get_levantamentos_retro-hashrandom1234', methods = ['GET'])
+def get_lev_retro():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT id, rodovia, crescente, decrescente, vertical, horizontal
+                    FROM public.retro_levantamentos
+                    WHERE ativo = true'''
+                    )
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_placas_retro-hashrandom1234', methods = ['GET'])
+def get_placas():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT id, km, posicao, mensagem, sentido, fabricacao, fabricante, largura, altura, formato, imagem, id_levantamento, obs, latitude, longitude
+                    FROM public.retro_placas
+                    '''
+                    )
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_leituras_retro-hashrandom1234', methods = ['GET'])
+def get_leituras():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT id, id_placa, cor, tipo, m1, m2, m3, m4, m5, "data"
+                    FROM public.retro_leituras
+                    '''
+                    )
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

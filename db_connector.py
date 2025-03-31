@@ -17,7 +17,7 @@ def get_db_connection():
 def ler_tabela(nome):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(f'SELECT * FROM public.demandas_{nome}')
+    cur.execute(f'SELECT * FROM public.{nome}')
 
     colunas = []
     for i in cur.description:

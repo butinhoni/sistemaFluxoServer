@@ -11,6 +11,8 @@ from psycopg2 import sql
 from dotenv import load_dotenv
 import os
 import pandas as pd
+import treatments
+import db_connector as db
 
 #merged
 
@@ -326,7 +328,18 @@ def get_leituras():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/get_diario-demandas-hashrandom1234', methods = ['GET'])
+def diarioDemandas():
+    try:
+        fluxo = db.ler_tabela('demandas_transferencias')
+        demandas = db.ler_tabela('demandas')
+        status = db.ler_tabela('demandas_status')
+        dados = treatments.reorganizarTabela(demandas,fluxo,status)
 
+        return jsonify(dados), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

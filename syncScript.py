@@ -206,6 +206,60 @@ def post_ensaiotsd():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/post_lev-especial-hashrandom1234')
+def post_lev_esp():
+    data = request.json
+
+    if not data:
+        return jsonify({'error':'sem dados recebidos'}), 400
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        for item in data:
+            cur.execute(
+                '''
+                INSERT INTO public.lev_especial(
+                    "id",
+                    km,
+                    panelas,
+                    remendos,
+                    trincamentos,
+                    drenagem,
+                    sin_horizontal,
+                    sin_vertical,
+                    rocada,
+                    erosao,
+                    interferencia,
+                    oae,
+                    latitude,
+                    longitude
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (item['id'],
+                      item['km'],
+                      item['panela'],
+                      item['remendos'],
+                      item['trincamento'],
+                      item['drenagem'],
+                      item['sinHorizontal'],
+                      item['sinVertical'],
+                      item['rocada'],
+                      item['erosao'],
+                      item['interferencia'],
+                      item['oae'],
+                      item['latitude'],
+                      item['longitude'])
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Dados enviados'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/post_ocorrencia-hashrandom1234', methods = ['POST'])
 def post_ocorrencia():

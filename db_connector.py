@@ -27,3 +27,16 @@ def ler_tabela(nome):
 
     df = pd.DataFrame(dados, columns=colunas)
     return(df)
+
+def returnTabela(nome):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(f'SELECT * FROM public.{nome}')
+
+    colunas = []
+    for i in cur.description:
+        colunas.append(i[0])
+
+    dados = cur.fetchall()
+
+    return(dados)

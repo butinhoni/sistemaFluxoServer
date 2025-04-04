@@ -83,8 +83,6 @@ def login():
         set_access_cookies(response, access_token)
         set_refresh_cookies(response,refresh_token)
 
-        print(response)
-
         return response
 
     else:
@@ -206,7 +204,6 @@ def post_ensaiotsd():
 
         return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
     except Exception as e:
-        print (str(e))
         return jsonify({'error': str(e)}), 500
 
 
@@ -244,7 +241,6 @@ def post_ocorrencia():
 
         return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
     except Exception as e:
-        print (str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/post_pictures-hashrandom1234', methods = ['POST'])
@@ -333,13 +329,43 @@ def diarioDemandas():
     try:
         fluxo = db.ler_tabela('demandas_transferencias')
         demandas = db.ler_tabela('demandas')
+        demandas = demandas.set_index('id')
         status = db.ler_tabela('demandas_status')
-        dados = treatments.reorganizarTabela(demandas,fluxo,status)
+        dados = treatments.reorganizarTabela(demandas,fluxo,status).to_json(orient='table')
 
         return jsonify(dados), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+@app.route('/get_demandas-hashrandom1234', methods = ['GET'])
+def demandas():
+    try:
+        dados = db.ler_tabela('demandas')
+        dados['id'] = dados['id'].astype(str)
+        dados = dados.to_json(orient = 'table')
+        return jsonify(dados), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_demandas-status-hashrandom1234', methods = ['GET'])
+def demandas_status():
+    try:
+        dados = db.ler_tabela('demandas_status')
+        dados['id_demanda'] = dados['id_demanda'].astype(str)
+        dados = dados.to_json(orient = 'table')
+        return jsonify(dados), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_demandas-fluxo-hashrandom1234', methods = ['GET'])
+def demandas_fluxo():
+    try:
+        dados = db.ler_tabela('demandas_transferencias')
+        dados['demanda'] = dados['demanda'].astype(str)
+        dados = dados.to_json(orient = 'table')
+        return jsonify(dados), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)

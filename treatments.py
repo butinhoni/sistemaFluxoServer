@@ -1,5 +1,12 @@
 import pandas as pd
 import datetime
+import db_connector as db
+
+fluxo = db.ler_tabela('demandas_transferencias')
+demandas = db.ler_tabela('demandas')
+demandas = demandas.set_index('id')
+status = db.ler_tabela('demandas_status')
+
 
 def reorganizarTabela(tabelaDemandas, tabelaFluxo, tabelaStatus):
     dados_tabela = {
@@ -16,8 +23,7 @@ def reorganizarTabela(tabelaDemandas, tabelaFluxo, tabelaStatus):
         changes = tabelaStatus[tabelaStatus['id_demanda'] == i]
         people = tabelaFluxo[tabelaFluxo['demanda'] == i]
         data = row['data']
-        status = 'A Iniciar'
-        print(people)
+        status = row['status']
         try:
             responsavel = people['destinatario'].iloc[0]
         except:
@@ -40,5 +46,5 @@ def reorganizarTabela(tabelaDemandas, tabelaFluxo, tabelaStatus):
             data = data + datetime.timedelta(1)
 
     dfFinal = pd.DataFrame(dados_tabela)
-    print(dfFinal)
-                
+    return(dfFinal)
+            

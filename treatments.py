@@ -16,6 +16,7 @@ def reorganizarTabela(tabelaDemandas, tabelaFluxo, tabelaStatus):
         'responsavel':[]
     }
 
+    
     #data do dia
     today = datetime.datetime.now().date()
 
@@ -39,11 +40,12 @@ def reorganizarTabela(tabelaDemandas, tabelaFluxo, tabelaStatus):
                 status = _changes['status_novo'].iloc[0]
             except:
                 pass
-            dados_tabela['data'].append(data)
-            dados_tabela['demanda'].append(i)
-            dados_tabela['responsavel'].append(responsavel)
-            dados_tabela['status'].append(status)
-            data = data + datetime.timedelta(1)
+            if status != 'Finalizado':
+                dados_tabela['data'].append(data)
+                dados_tabela['demanda'].append(i)
+                dados_tabela['responsavel'].append(responsavel)
+                dados_tabela['status'].append(status)
+            data = data + datetime.timedelta(days = 1)
 
     dfFinal = pd.DataFrame(dados_tabela)
     return(dfFinal)

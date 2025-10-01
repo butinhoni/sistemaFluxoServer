@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_file, abort
 from flask_jwt_extended import(
     JWTManager, create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, set_access_cookies, set_refresh_cookies,
@@ -13,6 +13,8 @@ import os
 import pandas as pd
 import treatments
 import db_connector as db
+from PIL import Image
+import io
 
 #merged
 
@@ -28,6 +30,8 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = 900 # token de acesso
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = 604800 #7 dias para o token de refresh
 
 jwt = JWTManager(app)
+
+api_token = segredos.api_token
 
 def get_db_connection():
     conn = psycopg2.connect(
@@ -206,7 +210,7 @@ def post_ensaiotsd():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/post_lev-especial-hashrandom1234')
+@app.route('/post_lev-especial-hashrandom1234', methods = ['POST'])
 def post_lev_esp():
     data = request.json
 
@@ -239,12 +243,12 @@ def post_lev_esp():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (item['id'],
                       item['km'],
-                      item['panela'],
+                      item['panelas'],
                       item['remendos'],
                       item['trincamento'],
                       item['drenagem'],
-                      item['sinHorizontal'],
-                      item['sinVertical'],
+                      item['horizontal'],
+                      item['vertical'],
                       item['rocada'],
                       item['erosao'],
                       item['interferencia'],
@@ -258,8 +262,8 @@ def post_lev_esp():
 
         return jsonify({'message': 'Dados enviados'}), 200
     except Exception as e:
+        print(e)
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/post_ocorrencia-hashrandom1234', methods = ['POST'])
 def post_ocorrencia():
@@ -381,6 +385,7 @@ def get_leituras():
 @app.route('/get_diario-demandas-hashrandom1234', methods = ['GET'])
 def diarioDemandas():
     try:
+        print('lendo')
         fluxo = db.ler_tabela('demandas_transferencias')
         demandas = db.ler_tabela('demandas')
         demandas = demandas.set_index('id')
@@ -423,3 +428,104 @@ def demandas_fluxo():
 
 if __name__ == 'main':
     app.run(host = '0.0.0.0', port=5000)
+
+@app.route('/get_ensaios_solos-hashrandom1234', methods = ['GET'])
+def get_ensaios_solos():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT *
+                    FROM public.ensaios_solos
+                    '''
+                    )
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/get_ensaios_cbuq-hashrandom1234', methods = ['GET'])
+def get_ensaios_cbuq():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT *
+                    FROM public.ensaios_cbuq
+                    '''
+                    )
+
+        result = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_ensaios_concreto-hashrandom1234', methods = ['GET'])
+def get_ensaios_concreto():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute('''
+                    SELECT *
+                    FROM public.ensaios_concreto
+                    '''
+                    )
+
+        result = cur.fetchall()
+        result = list(result)
+        cur.close()
+        conn.close()
+
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/placas-<placa>', methods = ['GET'])
+def get_image(placa):
+    image_path = os.path.join('images/placas', placa)
+    if not os.path.exists(image_path):
+        return abort(404)
+    try:
+        with Image.open(image_path) as img:
+            img.thumbnail((300,200))
+            buffer = io.BytesIO()
+            img.save(buffer, format='JPEG', quality = 75)
+            buffer.seek(0)
+            return send_file(buffer, mimetype = 'image/jpeg')
+    except Exception as e:
+        return abort(500, description=str(e))
+
+
+def check_token():
+    token = request.args.get('token') or request.headers.get('Authorization')
+    return token == api_token
+
+@app.route('/ler_tabela', methods = ['GET'])
+def get_tabela():
+    if not check_token:
+        return jsonify({'error': 'Token Inválido'})
+    
+    tabela = request.args.get('tabela')
+    if not tabela:
+        return jsonify ({'error': 'insira a tabela'})
+    
+    df = db.ler_tabela(tabela)
+
+    df = df.fillna('null')
+
+    df = df.to_json(orient='table', default_handler=str)
+
+    return jsonify(df)

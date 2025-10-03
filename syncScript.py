@@ -464,7 +464,7 @@ def get_ensaios_cbuq():
                     )
 
         result = cur.fetchall()
-
+        print(result)
         cur.close()
         conn.close()
 
@@ -485,7 +485,7 @@ def get_ensaios_concreto():
                     )
 
         result = cur.fetchall()
-        result = list(result)
+        print(result)
         cur.close()
         conn.close()
 
@@ -529,3 +529,28 @@ def get_tabela():
     df = df.to_json(orient='table', default_handler=str)
 
     return jsonify(df)
+
+@app.route('/postar_coisas_020', methods = ['POST'])
+def post020():
+    data = request.json
+    if not data:
+        abort(400, description = "Bad Requeste: JSON body is required")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+        INSERT INTO public.lev_020(
+                    levantamento, numero, foto)
+                    VALUES(%s, %s, %s)
+    ''', data['tipo'], data['numero'], data['foto']
+    )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'message':'Ocorrencia cadastrada com sucesso'}), 200
+    except psycopg2.Error as e:
+        print(e)
+        conn.rollback()
+        abort(500, description=f'Database Error {e}')
+        return jsonify({'error':'erro no cadastro do ponto'}), 500

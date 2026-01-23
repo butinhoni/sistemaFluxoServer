@@ -14,10 +14,13 @@ def get_db_connection():
     return conn
 
 
-def ler_tabela(nome):
+def ler_tabela(nome, filtro = '', coluna = ''):
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute(f'SELECT * FROM public.{nome}')
+    query = f'SELECT * FROM public.{nome}'
+    if filtro != '':
+        query = query + f' WHERE {coluna} = {filtro}'
+    cur.execute(query)
 
     colunas = []
     for i in cur.description:

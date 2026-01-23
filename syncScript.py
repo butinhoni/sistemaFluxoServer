@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response, send_file, abort
+from flask import Flask, request, jsonify, make_response, send_file, abort, send_from_directory
 from flask_jwt_extended import(
     JWTManager, create_access_token, create_refresh_token,
     jwt_required, get_jwt_identity, set_access_cookies, set_refresh_cookies,
@@ -15,6 +15,8 @@ import treatments
 import db_connector as db
 from PIL import Image
 import io
+
+image_dir = '/home/guilherme/drive/fotos_app'
 
 #merged
 
@@ -131,7 +133,7 @@ def get_contr():
         conn = get_db_connection()
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute('SELECT ic, fantasia, rodovia FROM public.contratos WHERE ativo = true')
+        cur.execute('SELECT ic, fantasia, rodovia, nucleo FROM public.contratos WHERE ativo = true')
 
         result = cur.fetchall()
 
@@ -201,6 +203,89 @@ def post_ensaiotsd():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ''', (item['contrato'], item['data_ensaio'], item['longitude'], item['latitude'], item['estaca_inicial'], item['estaca_final'], item['etapa'], item['material'], item['largura'], item['posicao'],
                 item['largura_badeja'], item['comprimento_bandeja'], item['peso_inicial'], item['peso_final'], item['taxa'])
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({'message': 'Dados sincronizados com sucesso'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/post_ensaiodensidade-hashrandom1234', methods = ['POST'])
+def post_ensaiodensidade():
+
+    data = request.json
+
+    if not data:
+        return jsonify({'error': 'sem dados recebidos'}), 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        for item in data:
+            item['data_ensaio'] = pd.to_datetime(item['data_ensaio'], dayfirst=True)
+            item['data_ensaio'] = item['data_ensaio'].strftime('%Y-%m-%d')
+            cur.execute(
+                '''
+                INSERT INTO public.ensaios_densidade (
+                camada, 
+                pista,
+                profundidade,
+                "data",
+                estaca,
+                posicao,
+                pesoantes,
+                frascodepois,
+                areiadiferenca,
+                constantedoconeg,
+                pesodaareianofurog,
+                "massaespecificadaareiag/dm³",
+                "volumedofurodm³",
+                "pesodosolo+recipiente",
+                pesodorecipiente,
+                pesodosoloumido,
+                densidadedosoloumidog,
+                "densidadedosolosecog/dm³",
+                ensaiolaboratoriodensmax,
+                umidotima,
+                compactacao,
+                teordeumidade,
+                desviodeumidade,
+                realizacao,
+                contrato,
+                latitude,
+                longitude)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (item['camada'],
+                    item['pista'],
+                    item['profundidade'],
+                    item['data_ensaio'],
+                    item['estaca'],
+                    item['posicao'],
+                    item['pesoantes'],
+                    item['frascodepois'],
+                    item['areiadiferenca'],
+                    item['constantedoconeg'],
+                    item['pesodaareianofurog'],
+                    item['massaespecificadaareia'],
+                    item['volumedofurodm'],
+                    item['pesodosoloerecipiente'],
+                    item['pesorecipiente'],
+                    item['pesosoloumido'],
+                    item['densidadesoloumido'],
+                    item['densidadesoloseco'],
+                    item['ensaiolaboratoriodensmax'],
+                    item['umidadeotima'],
+                    item['graudecompactacao'],
+                    item['umidadecampo'],
+                    item['desvioumidade'],
+                    item['realizacao'],
+                    item['contrato'],
+                    item['latitude'],
+                    item['longitude']
+                )
             )
         conn.commit()
         cur.close()
@@ -312,7 +397,7 @@ def post_pictures():
         return jsonify({'error':'Nome de arquivo vazio'}), 400
     
     if file and file.filename.endswith('.jpg'):
-        image_folder = '/home/guilherme/sistemas/checklist_engevvia/images_ocorrencias'
+        image_folder = image_dir
         filepath = os.path.join(image_folder, file.filename)
         file.save(filepath)
         return jsonify({'message': 'Arquivo Salvo com sucesso', 'filepath': filepath}), 200
@@ -519,10 +604,21 @@ def get_tabela():
         return jsonify({'error': 'Token Inválido'})
     
     tabela = request.args.get('tabela')
+    coluna = request.args.get('coluna')
+    filtro = request.args.get('filtro')
+    
     if not tabela:
         return jsonify ({'error': 'insira a tabela'})
     
-    df = db.ler_tabela(tabela)
+    if not coluna:
+        where = False
+    else:
+        where = True
+
+    if where:
+        df = db.ler_tabela(tabela, coluna, filtro)
+    else:
+        df = db.ler_tabela(tabela)
 
     df = df.fillna('null')
 
@@ -534,17 +630,21 @@ def get_tabela():
 def post020():
     data = request.json
     if not data:
-        abort(400, description = "Bad Requeste: JSON body is required")
+        abort(400, description = "Bad Request: JSON body is required")
     try:
+        print(data)
         conn = get_db_connection()
         cur = conn.cursor()
 
-        cur.execute('''
-        INSERT INTO public.lev_020(
-                    levantamento, numero, foto)
-                    VALUES(%s, %s, %s)
-    ''', data['tipo'], data['numero'], data['foto']
-    )
+        for item in data['ocorrencias']:
+            print(item)
+            cur.execute(
+        '''
+            INSERT INTO public.lev_020(
+                        levantamento, numero, foto, latitude, longitude, levantamento_id)
+                        VALUES(%s, %s, %s, %s, %s, %s)
+        ''', (item['tipo'], item['numero'], item['foto'], item['latitude'], item['longitude'], item['levantamento_id'])
+        )
         conn.commit()
         cur.close()
         conn.close()
@@ -554,3 +654,48 @@ def post020():
         conn.rollback()
         abort(500, description=f'Database Error {e}')
         return jsonify({'error':'erro no cadastro do ponto'}), 500
+
+@app.route('/fotos/ler_foto', methods = ['GET'])
+def get_picture():
+    try:
+        if not check_token:
+            return jsonify({'error': 'token inválido'})
+        foto = request.args.get('imagem')
+        print(foto)
+        foto_total = os.path.join(image_dir, foto)
+        print(foto_total)
+        if not os.path.isfile(foto_total):
+            abort(404)
+        return send_from_directory(image_dir, foto)
+    except Exception as e:
+        print(e)
+        abort(500)
+
+
+@app.route('/post_levantamento', methods = ['POST'])
+def post_levantamento():
+    data = request.json
+    if not check_token:
+        return jsonify ({'error':'token inválido'})
+    if not data:
+        abort(400, description = "Bad Request: JSON body is required")
+    try:
+        print(data)
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            '''
+            INSERT INTO public.levantamentos(descricao, itens)
+            VALUES(%s, %s)
+            ''', (data['descricao'], data['itens'])
+        )
+        cur.close()
+        conn.commit()
+        conn.close()
+        return jsonify({'message':'Levantamento Cadastrado'}), 200
+    except psycopg2.Error as e:
+        print(e)
+        conn.rollback()
+        abort(500, description = f'Database Error {e}')
+        return jsonify({'error':'erro no cadastro do levantamento'}), 500
